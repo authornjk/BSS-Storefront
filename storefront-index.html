@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>A Bookish Summer Soirée — Preorder Books</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,700;1,600&family=Montserrat:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0C1E3D;
+    --terracotta:#E4593F;
+    --sage:#94A177;
+    --cream:#F7EFE1;
+    --peach:#F3D9C9;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--cream); color:var(--navy); }
+  body{ font-family:'Lora',serif; -webkit-font-smoothing:antialiased; padding-bottom:90px; }
+
+  a{ color:inherit; }
+
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    background:var(--navy); color:var(--cream);
+    padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between;
+    box-shadow:0 2px 10px rgba(12,30,61,0.15);
+  }
+  .topbar-title{
+    font-family:'Playfair Display',serif; font-weight:700; font-size:19px;
+    cursor:pointer;
+  }
+  .cart-btn{
+    position:relative;
+    background:var(--terracotta); color:#fff; border:none;
+    border-radius:999px; padding:10px 16px;
+    font-family:'Montserrat',sans-serif; font-weight:600; font-size:13px;
+    cursor:pointer; display:flex; align-items:center; gap:6px;
+  }
+  .cart-badge{
+    background:#fff; color:var(--terracotta);
+    border-radius:999px; min-width:20px; height:20px; padding:0 5px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700;
+  }
+
+  .cutoff-banner{
+    background:var(--terracotta); color:#fff;
+    text-align:center; padding:10px 16px;
+    font-family:'Montserrat',sans-serif; font-weight:700; font-size:13px;
+    letter-spacing:.02em;
+  }
+
+  .container{ max-width:640px; margin:0 auto; padding:18px 16px 40px; }
+
+  .search-wrap{ margin-bottom:18px; }
+  .search-input{
+    width:100%; padding:13px 16px; border-radius:999px;
+    border:1.5px solid rgba(12,30,61,0.15); background:#fff;
+    font-family:'Lora',serif; font-size:15px; color:var(--navy);
+  }
+  .search-input:focus{ outline:none; border-color:var(--terracotta); }
+
+  .book-grid{ display:flex; flex-direction:column; gap:14px; }
+  .book-card{
+    display:flex; gap:14px; background:#fff; border-radius:14px;
+    padding:14px; box-shadow:0 2px 10px rgba(12,30,61,0.08);
+    cursor:pointer; transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .book-card:active{ transform:scale(0.99); }
+  .book-cover{
+    flex:0 0 auto; width:72px; height:104px; border-radius:6px;
+    background:var(--cream); overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .book-cover img{ width:100%; height:100%; object-fit:cover; }
+  .book-cover-placeholder{ font-size:10px; color:#999; text-align:center; padding:6px; font-family:'Montserrat',sans-serif; }
+  .book-info{ flex:1; min-width:0; }
+  .book-title{ font-family:'Cormorant Garamond',serif; font-weight:700; font-size:19px; line-height:1.2; }
+  .book-author{ font-family:'Montserrat',sans-serif; font-size:12px; color:var(--terracotta); margin-top:2px; }
+  .book-tagline{ font-family:'Lora',serif; font-style:italic; font-size:12.5px; color:#666; margin-top:5px; }
+  .book-price{ margin-top:8px; font-size:14px; }
+  .book-price .strike{ text-decoration:line-through; opacity:.55; margin-right:6px; }
+  .book-series-pill{
+    display:inline-block; margin-top:6px; font-family:'Montserrat',sans-serif;
+    font-size:10.5px; font-weight:700; letter-spacing:.03em; color:var(--sage);
+    background:rgba(148,161,119,0.15); padding:3px 9px; border-radius:999px;
+  }
+
+  .empty-state{ text-align:center; padding:60px 20px; color:#777; font-family:'Lora',serif; }
+
+  /* ---- Buttons (matches Author Info app's pill style) ---- */
+  .btn{
+    font-family:'Montserrat',sans-serif; font-weight:600; font-size:14px;
+    letter-spacing:.03em; border:none; border-radius:999px; padding:14px 28px;
+    cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{ background:var(--terracotta); color:#fff; box-shadow:0 4px 14px rgba(228,89,63,0.35); }
+  .btn-secondary{ background:var(--cream); color:var(--navy); border:1.5px solid rgba(12,30,61,0.15); }
+  .btn-block{ width:100%; }
+  .btn-compact{ padding:12px 22px; font-size:13.5px; }
+  .btn-tiny{ padding:9px 18px; font-size:12.5px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+
+  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
+
+  /* ---- Modal ---- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(12,30,61,0.5);
+    display:flex; align-items:flex-end; justify-content:center;
+    z-index:80; animation:fadeIn .15s ease;
+  }
+  @media (min-width:560px){ .modal-overlay{ align-items:center; } }
+  @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+  .modal-card{
+    background:#fff; width:100%; max-width:480px;
+    border-radius:20px 20px 0 0; padding:26px 22px 30px;
+    max-height:88vh; overflow-y:auto;
+    box-shadow:0 -4px 30px rgba(12,30,61,0.25);
+  }
+  @media (min-width:560px){ .modal-card{ border-radius:20px; margin-bottom:0; } }
+  .modal-title{ font-family:'Playfair Display',serif; font-weight:700; font-size:22px; margin-bottom:6px; }
+  .modal-sub{ font-family:'Lora',serif; font-size:14.5px; color:#555; margin-bottom:18px; line-height:1.5; }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-family:'Montserrat',sans-serif; font-weight:600; font-size:12.5px; margin-bottom:7px; color:var(--navy); }
+  .field input[type="text"], .field input[type="email"], .field input[type="number"]{
+    width:100%; padding:12px 14px; border-radius:10px;
+    border:1.5px solid rgba(12,30,61,0.15); background:var(--cream);
+    font-family:'Lora',serif; font-size:15px; color:var(--navy);
+  }
+  .field input:focus{ outline:none; border-color:var(--terracotta); }
+  .help{ font-family:'Montserrat',sans-serif; font-size:12px; color:#888; margin-top:4px; }
+
+  .qty-stepper{ display:flex; align-items:center; gap:14px; }
+  .qty-stepper button{
+    width:38px; height:38px; border-radius:50%; border:1.5px solid rgba(12,30,61,0.15);
+    background:#fff; font-size:18px; cursor:pointer; color:var(--navy);
+  }
+  .qty-stepper .qty-val{ font-family:'Montserrat',sans-serif; font-weight:700; font-size:17px; min-width:24px; text-align:center; }
+
+  .radio-group{ display:flex; flex-direction:column; gap:10px; }
+  .radio-option{
+    display:flex; align-items:center; gap:12px;
+    font-family:'Lora',serif; font-size:15px;
+    background:var(--cream); border:1.5px solid rgba(12,30,61,0.12);
+    border-radius:10px; padding:13px 15px; cursor:pointer;
+  }
+  .radio-option.selected{ border-color:var(--terracotta); background:var(--peach); }
+  .radio-option input{ accent-color:var(--terracotta); width:18px; height:18px; }
+
+  .series-list-item{
+    display:flex; align-items:center; gap:12px; padding:10px 4px;
+    border-bottom:1px solid rgba(12,30,61,0.08); font-family:'Lora',serif; font-size:14.5px;
+  }
+  .series-list-item img{ width:36px; height:52px; object-fit:cover; border-radius:4px; background:var(--cream); }
+  .series-list-item input{ width:18px; height:18px; accent-color:var(--terracotta); flex-shrink:0; }
+
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none;
+    font-size:20px; color:#999; cursor:pointer; padding:4px;
+  }
+  .modal-card{ position:relative; }
+
+  /* ---- Cart ---- */
+  .cart-line{
+    display:flex; gap:12px; padding:14px 0; border-bottom:1px solid rgba(12,30,61,0.08);
+  }
+  .cart-line-cover{ width:50px; height:72px; border-radius:5px; background:var(--cream); overflow:hidden; flex-shrink:0; }
+  .cart-line-cover img{ width:100%; height:100%; object-fit:cover; }
+  .cart-line-info{ flex:1; min-width:0; }
+  .cart-line-title{ font-family:'Cormorant Garamond',serif; font-weight:700; font-size:16.5px; }
+  .cart-line-author{ font-family:'Montserrat',sans-serif; font-size:11px; color:var(--terracotta); }
+  .cart-line-meta{ font-family:'Montserrat',sans-serif; font-size:11.5px; color:#777; margin-top:4px; }
+  .cart-line-price{ font-family:'Montserrat',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; }
+  .cart-line-remove{ font-family:'Montserrat',sans-serif; font-size:11px; color:var(--terracotta); cursor:pointer; margin-top:6px; }
+
+  .cart-total-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 0; font-family:'Montserrat',sans-serif; font-weight:700; font-size:17px;
+    border-top:2px solid var(--navy); margin-top:6px;
+  }
+
+  .eyebrow{
+    font-family:'Montserrat',sans-serif; font-weight:700; font-size:12px;
+    letter-spacing:.14em; color:var(--terracotta); margin-bottom:8px;
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px);
+    background:var(--navy); color:var(--cream); font-family:'Montserrat',sans-serif; font-size:13px;
+    padding:12px 22px; border-radius:999px; opacity:0; transition:all .25s ease; pointer-events:none; z-index:95;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .save-overlay{
+    position:fixed; inset:0; background:rgba(247,239,225,0.6);
+    display:none; align-items:center; justify-content:center; z-index:90;
+  }
+  .save-overlay.show{ display:flex; }
+  .save-overlay-inner{ display:flex; flex-direction:column; align-items:center; gap:10px; background:#fff; padding:20px 30px; border-radius:14px; box-shadow:0 4px 20px rgba(12,30,61,0.18); }
+  .save-overlay-spinner{ width:28px; height:28px; border:3px solid rgba(12,30,61,0.15); border-top-color:var(--terracotta); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .sticky-checkout-bar{
+    position:fixed; bottom:0; left:0; right:0; background:#fff;
+    border-top:1px solid rgba(12,30,61,0.1); padding:12px 16px;
+    box-shadow:0 -4px 14px rgba(12,30,61,0.08); z-index:30;
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-title" onclick="goBrowse()">A Bookish Summer Soirée</div>
+  <button class="cart-btn" onclick="goCart()">Cart <span class="cart-badge" id="cartBadge">0</span></button>
+</div>
+<div class="cutoff-banner">Preorder sales stop May 1, 2027</div>
+<div id="app" class="container"></div>
+<div class="toast" id="toast"></div>
+<div class="save-overlay" id="saveOverlay"><div class="save-overlay-inner"><div class="save-overlay-spinner"></div><div style="font-family:'Montserrat',sans-serif;font-size:13px;">Just a moment&hellip;</div></div></div>
+
+<script>
+/* =========================================================
+   CONFIG — same Apps Script backend as the Author Info app,
+   just different actions (getPreorderCatalog / createCheckoutSession /
+   confirmCheckoutSession).
+========================================================= */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx243aXYN1O8ABOO729RyMlgKV68OzKqVtKUqPetqVPwSKQ_5wCjI71_vyEG6y_K66i/exec";
+
+/* =========================================================
+   STATE
+========================================================= */
+let catalog = [];
+let catalogLoaded = false;
+let cart = loadCartFromStorage();
+let currentScreen = "browse";
+let searchQuery = "";
+
+function loadCartFromStorage(){
+  try{
+    const raw = localStorage.getItem("bss_preorder_cart");
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function saveCartToStorage(){
+  try{ localStorage.setItem("bss_preorder_cart", JSON.stringify(cart)); }catch(e){}
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function showOverlay(){ document.getElementById('saveOverlay').classList.add('show'); }
+function hideOverlay(){ document.getElementById('saveOverlay').classList.remove('show'); }
+
+function money(n){
+  const num = parseFloat(n);
+  return isNaN(num) ? "$0.00" : "$" + num.toFixed(2);
+}
+function coverSrc(url){
+  if(!url) return "";
+  const m = url.match(/\/d\/([^/]+)/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w400` : url;
+}
+function escapeHtml(s){
+  return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function effectivePrice(book){
+  const soiree = parseFloat(book.soireePrice);
+  const reg = parseFloat(book.regularPrice);
+  if(!isNaN(soiree) && book.soireePrice !== "") return soiree;
+  return isNaN(reg) ? 0 : reg;
+}
+function seriesEffectivePrice(book){
+  const soiree = parseFloat(book.seriesSoireePrice);
+  const reg = parseFloat(book.seriesRegularPrice);
+  if(!isNaN(soiree) && book.seriesSoireePrice !== "") return soiree;
+  return isNaN(reg) ? null : reg;
+}
+
+function updateCartBadge(){
+  document.getElementById('cartBadge').textContent = cart.length;
+}
+
+/* =========================================================
+   MODAL SYSTEM
+========================================================= */
+let activeModalOverlay = null;
+function closeModal(){
+  if(activeModalOverlay){ activeModalOverlay.remove(); activeModalOverlay = null; }
+}
+function openModal(innerHtml, setupFn){
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.className = "modal-overlay";
+  overlay.onclick = (e) => { if(e.target === overlay) closeModal(); };
+  const card = document.createElement('div');
+  card.className = "modal-card";
+  card.innerHTML = `<button class="modal-close" onclick="closeModal()">&#10005;</button>` + innerHtml;
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  activeModalOverlay = overlay;
+  if(typeof setupFn === 'function') setupFn(card);
+  return card;
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function goBrowse(){ currentScreen = "browse"; render(); window.scrollTo(0,0); }
+function goCart(){ currentScreen = "cart"; render(); window.scrollTo(0,0); }
+function goCheckout(){
+  if(cart.length === 0){ showToast("Your cart is empty"); return; }
+  currentScreen = "checkout"; render(); window.scrollTo(0,0);
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = "";
+  updateCartBadge();
+  if(!catalogLoaded){ app.innerHTML = `<div class="empty-state">Loading books&hellip;</div>`; return; }
+  if(currentScreen === "browse") renderBrowse(app);
+  else if(currentScreen === "cart") renderCart(app);
+  else if(currentScreen === "checkout") renderCheckout(app);
+  else if(currentScreen === "success") renderSuccess(app);
+  else if(currentScreen === "cancelled") renderCancelled(app);
+}
+
+/* =========================================================
+   BROWSE
+========================================================= */
+function renderBrowse(app){
+  const searchWrap = document.createElement('div');
+  searchWrap.className = "search-wrap";
+  searchWrap.innerHTML = `<input class="search-input" type="text" placeholder="Search by author or book title" value="${escapeHtml(searchQuery)}">`;
+  const input = searchWrap.querySelector('input');
+  input.addEventListener('input', ()=>{ searchQuery = input.value; renderBookGrid(); });
+  app.appendChild(searchWrap);
+
+  const grid = document.createElement('div');
+  grid.className = "book-grid";
+  grid.id = "bookGrid";
+  app.appendChild(grid);
+
+  renderBookGrid();
+
+  function renderBookGrid(){
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = catalog.filter(b => !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+    grid.innerHTML = "";
+    if(filtered.length === 0){
+      grid.innerHTML = `<div class="empty-state">No books match "${escapeHtml(searchQuery)}" yet — try a different author or title.</div>`;
+      return;
+    }
+    filtered.forEach(book=>{
+      const card = document.createElement('div');
+      card.className = "book-card";
+      card.onclick = () => openBookFlow(book);
+
+      const price = effectivePrice(book);
+      const reg = parseFloat(book.regularPrice);
+      const hasSoiree = !isNaN(parseFloat(book.soireePrice)) && book.soireePrice !== "";
+      const priceHtml = hasSoiree
+        ? `<span class="strike">${money(reg)}</span><strong>${money(price)}</strong>`
+        : `<strong>${money(price)}</strong>`;
+
+      card.innerHTML = `
+        <div class="book-cover">${book.coverUrl ? `<img src="${coverSrc(book.coverUrl)}" alt="">` : `<div class="book-cover-placeholder">No cover yet</div>`}</div>
+        <div class="book-info">
+          <div class="book-title">${escapeHtml(book.title)}</div>
+          <div class="book-author">by ${escapeHtml(book.author)}</div>
+          ${book.tagLine ? `<div class="book-tagline">${escapeHtml(book.tagLine)}</div>` : ""}
+          <div class="book-price">${priceHtml}</div>
+          ${book.isSeries && book.seriesName ? `<div class="book-series-pill">Part of "${escapeHtml(book.seriesName)}"</div>` : ""}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+}
+
+/* =========================================================
+   ADD-TO-CART FLOW
+   Entry point for tapping any book. Series books show the series
+   choice modal first; standalone books go straight to the single-book
+   quantity/signing flow.
+========================================================= */
+function openBookFlow(book){
+  if(book.isSeries && book.seriesName){
+    openSeriesChoiceModal(book);
+  } else {
+    openSingleBookFlow(book);
+  }
+}
+
+function seriesSiblings(book){
+  return catalog.filter(b => b.isSeries && b.author === book.author && b.seriesName === book.seriesName);
+}
+
+function openSeriesChoiceModal(book){
+  const siblings = seriesSiblings(book);
+  const setPrice = seriesEffectivePrice(book);
+  const setPriceLabel = setPrice !== null ? money(setPrice) : null;
+
+  openModal(`
+    <div class="eyebrow">${escapeHtml(book.title)}</div>
+    <div class="modal-title">This book is part of a series.</div>
+    <div class="modal-sub">"${escapeHtml(book.seriesName)}" has ${siblings.length} book${siblings.length===1?"":"s"}.</div>
+    <div class="radio-group">
+      <div class="radio-option" id="optWholeSeries">
+        <span>Add the whole series to my cart${setPriceLabel ? ` — <strong>${setPriceLabel}</strong>` : ""}</span>
+      </div>
+      <div class="radio-option" id="optSeeOthers"><span>See the other books in the series</span></div>
+      <div class="radio-option" id="optJustThis"><span>I only want this book from the series</span></div>
+    </div>
+  `, (card)=>{
+    card.querySelector('#optWholeSeries').onclick = () => {
+      closeModal();
+      startGroupSigningFlow(siblings);
+    };
+    card.querySelector('#optSeeOthers').onclick = () => {
+      closeModal();
+      openSeriesListModal(book, siblings);
+    };
+    card.querySelector('#optJustThis').onclick = () => {
+      closeModal();
+      openSingleBookFlow(book);
+    };
+  });
+}
+
+function openSeriesListModal(book, siblings){
+  const setPrice = seriesEffectivePrice(book);
+  const itemsHtml = siblings.map((b,i)=>`
+    <label class="series-list-item">
+      <input type="checkbox" data-idx="${i}" checked>
+      ${b.coverUrl ? `<img src="${coverSrc(b.coverUrl)}" alt="">` : `<div style="width:36px;height:52px;background:var(--cream);border-radius:4px;flex-shrink:0;"></div>`}
+      <span style="flex:1;">${escapeHtml(b.title)}${b.seriesBookNumber ? ` <span style="opacity:.6;font-size:12px;">(Book ${escapeHtml(b.seriesBookNumber)})</span>` : ""}</span>
+      <span style="font-weight:700;font-size:13px;">${money(effectivePrice(b))}</span>
+    </label>
+  `).join("");
+
+  openModal(`
+    <div class="eyebrow">${escapeHtml(book.seriesName)}</div>
+    <div class="modal-title">Books in this series</div>
+    <div style="margin-bottom:16px;">${itemsHtml}</div>
+    <div class="btn-row" style="flex-direction:column;align-items:stretch;">
+      <button class="btn btn-primary" id="addWholeBtn">Add entire series to my cart${setPrice!==null ? ` — ${money(setPrice)}` : ""}</button>
+      <button class="btn btn-secondary" id="addSelectedBtn" style="margin-top:10px;">Add selected books</button>
+    </div>
+  `, (card)=>{
+    card.querySelector('#addWholeBtn').onclick = () => {
+      closeModal();
+      startGroupSigningFlow(siblings);
+    };
+    card.querySelector('#addSelectedBtn').onclick = () => {
+      const checked = Array.from(card.querySelectorAll('input[type="checkbox"]:checked')).map(cb => siblings[parseInt(cb.dataset.idx,10)]);
+      closeModal();
+      if(checked.length === 0){ showToast("Pick at least one book"); return; }
+      if(checked.length === 1){ openSingleBookFlow(checked[0]); }
+      else { startGroupSigningFlow(checked); }
+    };
+  });
+}
+
+/* ---- Single-book flow: quantity -> signed -> (how many, if qty>1) ->
+   personalized -> name(s) ---- */
+function openSingleBookFlow(book){
+  let qty = 1;
+  openModal(`
+    <div class="eyebrow">${escapeHtml(book.author)}</div>
+    <div class="modal-title">${escapeHtml(book.title)}</div>
+    <div class="modal-sub">${money(effectivePrice(book))} each</div>
+    <div class="field">
+      <label>How many copies?</label>
+      <div class="qty-stepper">
+        <button id="qtyMinus">&minus;</button>
+        <span class="qty-val" id="qtyVal">1</span>
+        <button id="qtyPlus">+</button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" id="qtyNextBtn">Next</button>
+  `, (card)=>{
+    const qtyVal = card.querySelector('#qtyVal');
+    card.querySelector('#qtyMinus').onclick = () => { qty = Math.max(1, qty-1); qtyVal.textContent = qty; };
+    card.querySelector('#qtyPlus').onclick = () => { qty = Math.min(20, qty+1); qtyVal.textContent = qty; };
+    card.querySelector('#qtyNextBtn').onclick = () => { closeModal(); openSignedQuestion(book, qty); };
+  });
+}
+
+function openSignedQuestion(book, qty){
+  const askText = qty === 1 ? "Do you want this book signed?" : "Do you want any of these books signed?";
+  openModal(`
+    <div class="modal-title">${askText}</div>
+    <div class="btn-row" style="flex-direction:column;align-items:stretch;">
+      <button class="btn btn-primary" id="signedYes">Yes</button>
+      <button class="btn btn-secondary" id="signedNo" style="margin-top:10px;">No</button>
+    </div>
+  `, (card)=>{
+    card.querySelector('#signedNo').onclick = () => {
+      closeModal();
+      addLinesToCart(makeUnsignedLines(book, qty));
+    };
+    card.querySelector('#signedYes').onclick = () => {
+      closeModal();
+      if(qty === 1) openPersonalizedQuestion(book, [{signed:true}], (lines)=> addLinesToCart(lines.concat(makeUnsignedLines(book, 0))));
+      else openHowManySigned(book, qty);
+    };
+  });
+}
+
+function openHowManySigned(book, qty){
+  let howMany = qty;
+  openModal(`
+    <div class="modal-title">How many of the ${qty} would you like signed?</div>
+    <div class="field">
+      <div class="qty-stepper">
+        <button id="hmMinus">&minus;</button>
+        <span class="qty-val" id="hmVal">${qty}</span>
+        <button id="hmPlus">+</button>
+      </div>
+      <div class="help">Out of ${qty} total ${qty===1?"copy":"copies"}.</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="hmNextBtn">Next</button>
+  `, (card)=>{
+    const hmVal = card.querySelector('#hmVal');
+    card.querySelector('#hmMinus').onclick = () => { howMany = Math.max(1, howMany-1); hmVal.textContent = howMany; };
+    card.querySelector('#hmPlus').onclick = () => { howMany = Math.min(qty, howMany+1); hmVal.textContent = howMany; };
+    card.querySelector('#hmNextBtn').onclick = () => {
+      closeModal();
+      const signedPlaceholders = Array.from({length: howMany}, () => ({signed:true}));
+      openPersonalizedQuestion(book, signedPlaceholders, (lines) => {
+        addLinesToCart(lines.concat(makeUnsignedLines(book, qty - howMany)));
+      });
+    };
+  });
+}
+
+// entries: array of {signed:true} objects, one per copy that will be signed.
+// onDone receives the finished cart line objects for those signed copies.
+function openPersonalizedQuestion(book, entries, onDone){
+  const askText = entries.length === 1 ? "Do you want it personalized?" : "Do you want these books personalized?";
+  openModal(`
+    <div class="modal-title">${askText}</div>
+    <div class="btn-row" style="flex-direction:column;align-items:stretch;">
+      <button class="btn btn-primary" id="persYes">Yes</button>
+      <button class="btn btn-secondary" id="persNo" style="margin-top:10px;">No</button>
+    </div>
+  `, (card)=>{
+    card.querySelector('#persNo').onclick = () => {
+      closeModal();
+      onDone(entries.map(() => makeCartLine(book, true, "")));
+    };
+    card.querySelector('#persYes').onclick = () => {
+      closeModal();
+      if(entries.length === 1){
+        openNameFields(book, 1, (names) => onDone([makeCartLine(book, true, names[0])]));
+      } else {
+        openNameFields(book, entries.length, (names) => onDone(names.map(n => makeCartLine(book, true, n))));
+      }
+    };
+  });
+}
+
+function openNameFields(book, count, onDone){
+  const ordinals = ["first","second","third","fourth","fifth","sixth","seventh","eighth","ninth","tenth"];
+  const fieldsHtml = Array.from({length: count}, (_, i) => `
+    <div class="field">
+      <label>What name do you want ${count===1 ? "inside the book" : `in the ${ordinals[i] || (i+1)+"th"} book`}?</label>
+      <input type="text" data-idx="${i}" placeholder="Name">
+    </div>
+  `).join("");
+
+  openModal(`
+    <div class="modal-title">Personalization</div>
+    ${fieldsHtml}
+    <button class="btn btn-primary btn-block" id="nameNextBtn">Add to cart</button>
+  `, (card)=>{
+    card.querySelector('#nameNextBtn').onclick = () => {
+      const names = Array.from(card.querySelectorAll('input[type="text"]')).map(i => i.value.trim());
+      closeModal();
+      onDone(names);
+    };
+  });
+}
+
+/* ---- Group signing flow: used when several DIFFERENT books are added
+   together (whole series, or a few picked from the series list). One
+   shared signed/personalized decision and name for the whole group. ---- */
+function startGroupSigningFlow(books){
+  // Series-set pricing: if every book came from the same series and that
+  // series has its own set price, prorate it across the books so the line
+  // items sum to exactly the set price (last item absorbs rounding).
+  const allSameSeries = books.length > 1 && books.every(b => b.isSeries && b.seriesName === books[0].seriesName && b.author === books[0].author);
+  let prices = books.map(b => effectivePrice(b));
+  if(allSameSeries){
+    const setPrice = seriesEffectivePrice(books[0]);
+    if(setPrice !== null){
+      const totalCents = Math.round(setPrice * 100);
+      const perCents = Math.floor(totalCents / books.length);
+      prices = books.map((b,i) => (i === books.length-1 ? (totalCents - perCents*(books.length-1)) : perCents) / 100);
+    }
+  }
+
+  openModal(`
+    <div class="modal-title">Do you want these books signed?</div>
+    <div class="modal-sub">${books.length} books from "${escapeHtml(books[0].seriesName || "")}" added to your cart.</div>
+    <div class="btn-row" style="flex-direction:column;align-items:stretch;">
+      <button class="btn btn-primary" id="gSignedYes">Yes</button>
+      <button class="btn btn-secondary" id="gSignedNo" style="margin-top:10px;">No</button>
+    </div>
+  `, (card)=>{
+    card.querySelector('#gSignedNo').onclick = () => {
+      closeModal();
+      addLinesToCart(books.map((b,i) => makeCartLine(b, false, "", prices[i])));
+    };
+    card.querySelector('#gSignedYes').onclick = () => {
+      closeModal();
+      openModal(`
+        <div class="modal-title">Do you want these books personalized?</div>
+        <div class="btn-row" style="flex-direction:column;align-items:stretch;">
+          <button class="btn btn-primary" id="gPersYes">Yes</button>
+          <button class="btn btn-secondary" id="gPersNo" style="margin-top:10px;">No</button>
+        </div>
+      `, (card2)=>{
+        card2.querySelector('#gPersNo').onclick = () => {
+          closeModal();
+          addLinesToCart(books.map((b,i) => makeCartLine(b, true, "", prices[i])));
+        };
+        card2.querySelector('#gPersYes').onclick = () => {
+          closeModal();
+          openModal(`
+            <div class="modal-title">What name do you want in these books?</div>
+            <div class="field"><input type="text" id="gNameInput" placeholder="Name"></div>
+            <button class="btn btn-primary btn-block" id="gNameNextBtn">Add to cart</button>
+          `, (card3)=>{
+            card3.querySelector('#gNameNextBtn').onclick = () => {
+              const name = card3.querySelector('#gNameInput').value.trim();
+              closeModal();
+              addLinesToCart(books.map((b,i) => makeCartLine(b, true, name, prices[i])));
+            };
+          });
+        };
+      });
+    };
+  });
+}
+
+function makeCartLine(book, signed, personalizedName, priceOverride){
+  return {
+    cartLineId: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+    bookId: book.id,
+    author: book.author,
+    title: book.title,
+    coverUrl: book.coverUrl,
+    unitPrice: priceOverride !== undefined ? priceOverride : effectivePrice(book),
+    signed: !!signed,
+    personalizedName: personalizedName || ""
+  };
+}
+function makeUnsignedLines(book, count){
+  return Array.from({length: Math.max(0,count)}, () => makeCartLine(book, false, ""));
+}
+
+function addLinesToCart(lines){
+  cart = cart.concat(lines);
+  saveCartToStorage();
+  updateCartBadge();
+  showToast(lines.length === 1 ? "Added to cart" : `Added ${lines.length} books to cart`);
+  if(currentScreen === "cart") render();
+}
+
+function removeCartLine(cartLineId){
+  cart = cart.filter(l => l.cartLineId !== cartLineId);
+  saveCartToStorage();
+  render();
+}
+
+function cartTotal(){
+  return cart.reduce((sum,l) => sum + (parseFloat(l.unitPrice)||0), 0);
+}
+
+/* =========================================================
+   CART
+========================================================= */
+function renderCart(app){
+  const heading = document.createElement('div');
+  heading.className = "modal-title";
+  heading.style.marginBottom = "16px";
+  heading.textContent = "Your cart";
+  app.appendChild(heading);
+
+  if(cart.length === 0){
+    app.innerHTML += `<div class="empty-state">Your cart is empty.<br><br></div>`;
+    const browseBtn = document.createElement('button');
+    browseBtn.className = "btn btn-primary";
+    browseBtn.textContent = "Browse books";
+    browseBtn.onclick = goBrowse;
+    app.appendChild(browseBtn);
+    return;
+  }
+
+  const list = document.createElement('div');
+  cart.forEach(line=>{
+    const row = document.createElement('div');
+    row.className = "cart-line";
+    let meta = line.signed ? "Signed" : "Not signed";
+    if(line.signed && line.personalizedName) meta += ` — personalized to "${escapeHtml(line.personalizedName)}"`;
+    row.innerHTML = `
+      <div class="cart-line-cover">${line.coverUrl ? `<img src="${coverSrc(line.coverUrl)}" alt="">` : ""}</div>
+      <div class="cart-line-info">
+        <div class="cart-line-title">${escapeHtml(line.title)}</div>
+        <div class="cart-line-author">by ${escapeHtml(line.author)}</div>
+        <div class="cart-line-meta">${meta}</div>
+        <div class="cart-line-remove" data-id="${line.cartLineId}">Remove</div>
+      </div>
+      <div class="cart-line-price">${money(line.unitPrice)}</div>
+    `;
+    row.querySelector('.cart-line-remove').onclick = () => removeCartLine(line.cartLineId);
+    list.appendChild(row);
+  });
+  app.appendChild(list);
+
+  const totalRow = document.createElement('div');
+  totalRow.className = "cart-total-row";
+  totalRow.innerHTML = `<span>Total</span><span>${money(cartTotal())}</span>`;
+  app.appendChild(totalRow);
+
+  const bar = document.createElement('div');
+  bar.style.marginTop = "20px";
+  const checkoutBtn = document.createElement('button');
+  checkoutBtn.className = "btn btn-primary btn-block";
+  checkoutBtn.textContent = "Checkout";
+  checkoutBtn.onclick = goCheckout;
+  bar.appendChild(checkoutBtn);
+  const backLink = document.createElement('div');
+  backLink.style.cssText = "text-align:center;margin-top:14px;font-family:'Montserrat',sans-serif;font-size:12.5px;color:var(--navy);opacity:.7;cursor:pointer;";
+  backLink.textContent = "Keep browsing";
+  backLink.onclick = goBrowse;
+  bar.appendChild(backLink);
+  app.appendChild(bar);
+}
+
+/* =========================================================
+   CHECKOUT
+========================================================= */
+function renderCheckout(app){
+  const heading = document.createElement('div');
+  heading.className = "modal-title";
+  heading.style.marginBottom = "6px";
+  heading.textContent = "Checkout";
+  app.appendChild(heading);
+
+  const sub = document.createElement('div');
+  sub.className = "modal-sub";
+  sub.textContent = `${cart.length} book${cart.length===1?"":"s"} — ${money(cartTotal())} total`;
+  app.appendChild(sub);
+
+  const form = document.createElement('div');
+  form.innerHTML = `
+    <div class="field"><label>Your name</label><input type="text" id="buyerName"></div>
+    <div class="field"><label>Email address</label><input type="email" id="buyerEmail"><div class="help">Your receipt and pickup info will go here.</div></div>
+  `;
+  app.appendChild(form);
+
+  const payBtn = document.createElement('button');
+  payBtn.className = "btn btn-primary btn-block";
+  payBtn.textContent = `Pay ${money(cartTotal())}`;
+  payBtn.onclick = () => submitCheckout(payBtn);
+  app.appendChild(payBtn);
+
+  const backLink = document.createElement('div');
+  backLink.style.cssText = "text-align:center;margin-top:14px;font-family:'Montserrat',sans-serif;font-size:12.5px;color:var(--navy);opacity:.7;cursor:pointer;";
+  backLink.textContent = "Back to cart";
+  backLink.onclick = goCart;
+  app.appendChild(backLink);
+}
+
+async function submitCheckout(btn){
+  const name = document.getElementById('buyerName').value.trim();
+  const email = document.getElementById('buyerEmail').value.trim();
+  if(!email || email.indexOf("@") === -1){ showToast("Please enter a valid email"); return; }
+  if(cart.length === 0){ showToast("Your cart is empty"); return; }
+
+  btn.disabled = true;
+  showOverlay();
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "createCheckoutSession",
+        buyerName: name,
+        buyerEmail: email,
+        lines: cart.map(l => ({ author: l.author, title: l.title, unitPrice: l.unitPrice, signed: l.signed, personalizedName: l.personalizedName }))
+      })
+    });
+    const json = await res.json();
+    if(!json || !json.success) throw new Error((json && json.error) || "Checkout couldn't start.");
+    window.location.href = json.url;
+  }catch(e){
+    hideOverlay();
+    btn.disabled = false;
+    showToast("Something went wrong — please try again");
+  }
+}
+
+/* =========================================================
+   SUCCESS / CANCELLED (Stripe redirects back here)
+========================================================= */
+function renderSuccess(app){
+  app.innerHTML = `
+    <div style="text-align:center;padding:40px 10px;">
+      <div class="modal-title">You're all set!</div>
+      <div class="modal-sub">Thank you for your order — a receipt is on its way to your email. Pick up (and get books signed) at A Bookish Summer Soirée.</div>
+    </div>
+  `;
+  const btn = document.createElement('button');
+  btn.className = "btn btn-primary";
+  btn.textContent = "Keep browsing";
+  btn.onclick = goBrowse;
+  app.appendChild(btn);
+}
+function renderCancelled(app){
+  app.innerHTML = `
+    <div style="text-align:center;padding:40px 10px;">
+      <div class="modal-title">Checkout cancelled</div>
+      <div class="modal-sub">No worries — your cart is still here whenever you're ready.</div>
+    </div>
+  `;
+  const btn = document.createElement('button');
+  btn.className = "btn btn-primary";
+  btn.textContent = "Back to cart";
+  btn.onclick = goCart;
+  app.appendChild(btn);
+}
+
+async function confirmSuccessIfNeeded(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('checkout') === 'success'){
+    const sessionId = params.get('session_id');
+    currentScreen = "success";
+    cart = [];
+    saveCartToStorage();
+    if(sessionId){
+      try{
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "confirmCheckoutSession", sessionId: sessionId })
+        });
+      }catch(e){ /* success page still shows; this just finalizes payout bookkeeping */ }
+    }
+  } else if(params.get('checkout') === 'cancelled'){
+    currentScreen = "cancelled";
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+async function loadCatalog(){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + "?action=getPreorderCatalog");
+    const json = await res.json();
+    catalog = (json && json.books) || [];
+  }catch(e){
+    catalog = [];
+    showToast("Couldn't load the book list — please refresh");
+  }
+  catalogLoaded = true;
+}
+
+(async function init(){
+  await confirmSuccessIfNeeded();
+  await loadCatalog();
+  render();
+})();
+</script>
+</body>
+</html>
